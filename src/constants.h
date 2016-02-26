@@ -13,6 +13,6 @@ const std::string CMD_TERMINATE = "terminate";
 const std::string CMD_HELP = "help";
 
 // reusable phrases
-const std::string ERR_INSUFF_ARGS = "Insufficient arguments for the command";
+const std::string ERR_INSUFF_ARGS = "Insufficient arguments for this option";
 
 #endif

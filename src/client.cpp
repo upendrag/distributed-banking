@@ -1,89 +1,144 @@
 #include "constants.h"
 #include "utils.h"
 
-#include <climits>
 #include <iostream>
-#include <iterator>
-#include <sstream>
-#include <vector>
 
 using namespace std;
 
-void print_help(void);
-vector<string> split_str(string str, string delim);
+void print_help(string);
+void suggest_help(string);
 
-int main()
+int main(int argc, char* argv[])
 {
-    string cmd_str;
-    
-    print_help();
+    if (argc < 2) {
+        Utils::print_error("Too few argumemts");
+        suggest_help(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    string cmd(argv[1]);
 
-    while (true) {
-        cout << ">> ";
-        getline(cin, cmd_str);
-        vector<string> cmd_args = split_str(cmd_str, " ");
-        if (cmd_args.size() == 0)
-            continue;
+    // Determine command type
+    if (cmd == CMD_HELP) {
+        print_help(argv[0]);
+    } else if (cmd == CMD_TERMINATE) {
+        //TODO: Implement server terminate;
+    } else if (cmd == CMD_CREATE) {
+        if (argc < 3) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
 
-        // Determine command type
-        if (cmd_args.front() == CMD_HELP)
-            print_help();
-        else if (cmd_args.front() == CMD_TERMINATE)
-            return 0;
-        else if (cmd_args.front() == CMD_CREATE) {
-            if (cmd_args.size() < 2) {
-                Utils::print_error(ERR_INSUFF_ARGS);
-                continue;
-            }            
-            string filename = cmd_args.at(1);
+        //TODO: remove print statements
+        cout << "argument: " << filename << endl;
 
-            //TODO: remove print statements
-            cout << "argument: " << filename << endl; 
+    } else if (cmd == CMD_SEEK) {
+        if (argc < 3) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
+        int index;
+        try {
+            index = Utils::str_to_int(argv[3]);
+        } catch (Exception ex) {
+            Utils::print_error("Parsing seek index: " 
+                + ex.get_message());
+            exit(EXIT_FAILURE);
         }
-        else if (cmd_args.front() == CMD_SEEK) {
-            if (cmd_args.size() < 3) {
-                Utils::print_error(ERR_INSUFF_ARGS);
-                continue;
-            }            
-            string filename = cmd_args.at(1);
-            int index;
-            try {
-                index = Utils::str_to_int(cmd_args.at(2));
-            } catch (Exception ex) {
-                Utils::print_error("Parsing seek index: " 
-                    + ex.get_message());
-                continue;
-            }
-            
-            //TODO: remove prints statements
-            cout << "argument: " << filename << endl;
-            cout << "argument: " << index << endl;
+        
+        //TODO: remove prints statements
+        cout << "argument: " << filename << endl;
+        cout << "argument: " << index << endl;
+
+    } else if (cmd == CMD_SEEK) {
+        if (argc < 4) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
+        int index;
+        try {
+            index = Utils::str_to_int(argv[3]);
+        } catch (Exception ex) {
+            Utils::print_error("Parsing seek index: " 
+                + ex.get_message());
+            exit(EXIT_FAILURE);
         }
-        else
-            cout << "Invalid command!" << endl;
+        
+        //TODO: remove prints statements
+        cout << "argument: " << filename << endl;
+        cout << "argument: " << index << endl;
+
+    } else if (cmd == CMD_READ) {
+        if (argc < 4) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
+        int length;
+        try {
+            length = Utils::str_to_int(argv[3]);
+        } catch (Exception ex) {
+            Utils::print_error("Parsing read length: " 
+                + ex.get_message());
+            exit(EXIT_FAILURE);
+        }
+        
+        //TODO: remove prints statements
+        cout << "argument: " << filename << endl;
+        cout << "argument: " << length << endl;
+
+    } else if (cmd == CMD_WRITE) {
+        if (argc < 4) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
+        string data(argv[3]);
+        
+        //TODO: remove prints statements
+        cout << "argument: " << filename << endl;
+        cout << "argument: " << data << endl;
+
+    } else if (cmd == CMD_DELETE) {
+        if (argc < 3) {
+            Utils::print_error(ERR_INSUFF_ARGS);
+            suggest_help(argv[0]);
+            exit(EXIT_FAILURE);
+        }            
+        string filename(argv[2]);
+
+        //TODO: remove print statements
+        cout << "argument: " << filename << endl; 
+
+    } else {
+        Utils::print_error("Unknown option");
+        suggest_help(argv[0]);
     }
 
     return 0;
 }
 
-void print_help(void)
+void print_help(string app_name)
 {
-    cout << "COMMAND LIST:" << endl;
-    cout << CMD_CREATE << " <filename>" << endl;
-    cout << CMD_SEEK << " <filename> <index>" << endl;
-    cout << CMD_READ << " <filename> <length>" << endl;
-    cout << CMD_WRITE << " <filename> <string>" << endl;
-    cout << CMD_DELETE << " <filename>" << endl;
-    cout << CMD_TERMINATE << endl;
-    cout << CMD_HELP << endl;
+    cout << "usage: " << app_name << " <option> ..." << endl;
+    cout << "options:" << endl;
+    cout << "\t" <<  CMD_CREATE << " <filename>" << endl;
+    cout << "\t" << CMD_SEEK << " <filename> <index>" << endl;
+    cout << "\t" << CMD_READ << " <filename> <length>" << endl;
+    cout << "\t" << CMD_WRITE << " <filename> <string>" << endl;
+    cout << "\t" << CMD_DELETE << " <filename>" << endl;
+    cout << "\t" << CMD_TERMINATE << endl;
+    cout << "\t" << CMD_HELP << endl;
 }
 
-vector<string> split_str(string str, string delim)
+void suggest_help(string app_name)
 {
-    istringstream iss(str);
-    vector<string> tokens;
-    copy(istream_iterator<string>(iss),
-        istream_iterator<string>(),
-        back_inserter(tokens));
-    return tokens;
+    cout << "Run '" << app_name << " help' for usage and options" << endl;
 }

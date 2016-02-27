@@ -113,11 +113,13 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    TcpSocket tcp_client("localhost", 8888);
+    TcpSocket tcp_client(76542);
     try {
-        tcp_client.init();
-        tcp_client.send(&send_data);
-        cout << tcp_client.receive() << endl;
+        char recv_data[256];
+        tcp_client.connect();
+        tcp_client.send(&send_data, sizeof(SockData));
+        tcp_client.receive(&recv_data, 256);
+        cout << recv_data << endl;
         tcp_client.close();
     } catch (Exception ex) {    
         Utils::print_error(ex.get_message());

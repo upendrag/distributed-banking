@@ -1,24 +1,23 @@
 #ifndef TCP_SERVER_H
 #define TCP_SERVER_H
 
-#include <netinet/in.h>
+#include "exception.h"
+#include "sock_data_cb.h"
+#include "tcp_socket.h"
 
-typedef struct sockaddr_in SocketAddr;
-
-typedef void (*on_data_received) (void);
-
-class TCP_Server
+class TcpServer
 {
     public:
-        TCP_Server(int portnum);
-        void start(on_data_received odc);
-
-    private:
-        int parent_fd;
-        int child_fd;
-        int port_num;
-        SocketAddr server_addr;
+        TcpServer(int portnum, SockDataCb* cb)
+        : main_socket(portnum), client_data_cb(cb)
+        { }
+        ~TcpServer() throw (Exception);
+        void start(void) throw (Exception);
         
+    private:
+        TcpSocket main_socket;
+        SockDataCb* client_data_cb;
+;
 };
 
 #endif

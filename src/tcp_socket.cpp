@@ -8,65 +8,108 @@
 #include <string.h>
 #include <unistd.h>
 
-TcpSocket::TcpSocket(std::string host, int port)
+TcpSocket::TcpSocket(int port, std::string host)
 : host(host), port(port)
 { }
 
+// destructor: close all active socket descriptors
 TcpSocket::~TcpSocket() throw (Exception)
 {
     if (sock_fd > -1)
         ::close(sock_fd);
 }
 
-void TcpSocket::init(void) throw (Exception)
+// initialize socket descriptor and host address
+void TcpSocket::init(bool isIpAddrAny) throw (Exception)
 {
     // create socket
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd < 0)
         throw Exception("unable to create socket", true);
 
-    // get host's DNS entry
-    host_entry = gethostbyname(host.c_str());
-    if (!host_entry)
-        throw Exception("no such host " + host, true);
-    
     // build host's internet address
     memset(&host_addr, 0, sizeof(host_addr));
-    host_addr.sin_family = AF_INET;
-    memcpy((char *)&host_addr.sin_addr.s_addr, host_entry->h_addr,
-        host_entry->h_length);
+    if (isIpAddrAny) {
+        host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    } else {
+        // get host's DNS entry
+        host_entry = gethostbyname(host.c_str());
+        if (!host_entry)
+            throw Exception("no such host " + host, true);
+        
+        memcpy((char *)&host_addr.sin_addr.s_addr, host_entry->h_addr,
+            host_entry->h_length);
+    }
+
     host_addr.sin_port = htons(port);
-
-    // create a connection with the host
-    connect();
+    host_addr.sin_family = AF_INET;
 }
 
-void TcpSocket::close(void) throw (Exception)
+// connect to a host. 
+// used by client modules.
+void TcpSocket::connect(void) throw (Exception)
 {
-    ::close(sock_fd);
+    // initialize socket
+    init();
+
+    int success = ::connect(sock_fd, (struct sockaddr *)&host_addr,
+        sizeof(host_addr));
+    if (success < 0)
+        throw Exception("unable to connect to host", true);
 }
 
-void TcpSocket::send(SockData* data) throw (Exception)
+// bind the socket to an ip address
+// used by server modules
+void TcpSocket::bind(void) throw (Exception)
 {
-    int bytes_written = write(sock_fd, data, sizeof(SockData));
+    // initialize socket with INADDR_ANY
+    init(true);
+
+    int success = ::bind(sock_fd, (struct sockaddr *)&host_addr,
+        sizeof(host_addr));
+    if (success < 0)
+        throw Exception("unable to bind to host address", true);
+}
+
+// listen for requests on the specified ports
+void TcpSocket::listen(void) throw (Exception)
+{
+    int success = ::listen(sock_fd, REQ_QUEUE_SZ);
+    if (success < 0)
+        throw Exception("could not initiate listen", true);
+}
+
+// accept requests from client and create client socket
+void TcpSocket::accept(TcpSocket& client_socket, int& client_socket_len)
+    throw (Exception)
+{
+    socklen_t client_len;
+    client_socket.sock_fd = ::accept(sock_fd, 
+        (struct sockaddr *)&client_socket.host_addr,
+        &client_len);
+    if (client_socket.sock_fd < 0)
+        throw Exception("could not accept connection request", true);
+    client_socket_len = (int) client_len;
+}
+
+// send/write data to socket
+void TcpSocket::send(void* data, int size) throw (Exception)
+{
+    int bytes_written = write(sock_fd, data, size);
     if (bytes_written < 0)
         throw Exception("cannot send data", true);
 }
 
-std::string TcpSocket::receive(void) throw (Exception)
+// receive/read data from socket
+void TcpSocket::receive(void* data, int size) throw (Exception)
 {
-    char buf[MAX_DATA_LEN] = {0};
-    int bytes_read = read(sock_fd, &buf, MAX_DATA_LEN);
+    int bytes_read = read(sock_fd, data, size);
     if (bytes_read < 0)
-        throw Exception("cannot receive data", true);
-    std::string data(buf);
-    return data;
+        throw Exception("cannot receive data", true);    
 }
 
-void TcpSocket::connect(void) throw (Exception)
+// close socket descriptor
+void TcpSocket::close(void) throw (Exception)
 {
-    int success = ::connect(sock_fd, (struct sockaddr*)&host_addr,
-        sizeof(host_addr));
-    if (success < 0)
-        throw Exception("unable to connect to host", true);
+    ::close(sock_fd);
 }

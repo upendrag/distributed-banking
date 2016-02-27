@@ -6,7 +6,7 @@
 class Exception
 {
     public:
-        Exception(std::string message);
+        Exception(std::string message, bool useErrno = false);
         std::string get_message(void);
 
     private:

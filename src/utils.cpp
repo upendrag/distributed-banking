@@ -2,6 +2,7 @@
 
 #include <iterator>
 #include <sstream>
+#include <string.h>
 
 int Utils::str_to_int(std::string val_str)
     throw (Exception)
@@ -34,3 +35,24 @@ std::vector<std::string> Utils::split_str(std::string str,
     return tokens;
 }
 
+void Utils::copy_str_to_arr(std::string str, char* arr,
+    int len)
+{
+    if (!arr)
+        throw Exception("Utils::copy_str_to_arr: undefined array");
+
+    if (str.size() < (unsigned int)len)
+        len = str.size();
+
+    memset(arr, 0, len);
+    memcpy(arr, str.c_str(), len);    
+}
+
+void Utils::reset_copy_arr(void* dest, void* src, int len)
+{    
+    if (!src || !dest)
+        throw Exception("Utils::copy_str_to_arr: undefined array");
+
+    memset(dest, 0, len);
+    memcpy(dest, src, len);
+}

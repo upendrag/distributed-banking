@@ -1,4 +1,5 @@
 #include "constants.h"
+#include "tcp_socket.h"
 #include "utils.h"
 
 #include <iostream>
@@ -17,41 +18,26 @@ int main(int argc, char* argv[])
     }
     string cmd(argv[1]);
 
+    // init socket data
+    SockData send_data;
+
     // Determine command type
     if (cmd == CMD_HELP) {
         print_help(argv[0]);
+        exit(EXIT_SUCCESS);
     } else if (cmd == CMD_TERMINATE) {
-        //TODO: Implement server terminate;
+        send_data.cmd_t = E_CMD_TERMINATE;
     } else if (cmd == CMD_CREATE) {
         if (argc < 3) {
             Utils::print_error(ERR_INSUFF_ARGS);
             suggest_help(argv[0]);
             exit(EXIT_FAILURE);
         }            
-        string filename(argv[2]);
 
-        //TODO: remove print statements
-        cout << "argument: " << filename << endl;
-
-    } else if (cmd == CMD_SEEK) {
-        if (argc < 3) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }            
-        string filename(argv[2]);
-        int index;
-        try {
-            index = Utils::str_to_int(argv[3]);
-        } catch (Exception ex) {
-            Utils::print_error("Parsing seek index: " 
-                + ex.get_message());
-            exit(EXIT_FAILURE);
-        }
-        
-        //TODO: remove prints statements
-        cout << "argument: " << filename << endl;
-        cout << "argument: " << index << endl;
+        // create data to send
+        send_data.cmd_t = E_CMD_CREATE;
+        Utils::reset_copy_arr(send_data.filename, argv[2],
+            MAX_FILE_NAME_LEN);
 
     } else if (cmd == CMD_SEEK) {
         if (argc < 4) {
@@ -59,7 +45,6 @@ int main(int argc, char* argv[])
             suggest_help(argv[0]);
             exit(EXIT_FAILURE);
         }            
-        string filename(argv[2]);
         int index;
         try {
             index = Utils::str_to_int(argv[3]);
@@ -68,10 +53,12 @@ int main(int argc, char* argv[])
                 + ex.get_message());
             exit(EXIT_FAILURE);
         }
-        
-        //TODO: remove prints statements
-        cout << "argument: " << filename << endl;
-        cout << "argument: " << index << endl;
+
+        // create data to send
+        send_data.cmd_t = E_CMD_SEEK;
+        Utils::reset_copy_arr(send_data.filename, argv[2],
+            MAX_FILE_NAME_LEN);
+        send_data.input.number = index;
 
     } else if (cmd == CMD_READ) {
         if (argc < 4) {
@@ -79,7 +66,6 @@ int main(int argc, char* argv[])
             suggest_help(argv[0]);
             exit(EXIT_FAILURE);
         }            
-        string filename(argv[2]);
         int length;
         try {
             length = Utils::str_to_int(argv[3]);
@@ -89,22 +75,25 @@ int main(int argc, char* argv[])
             exit(EXIT_FAILURE);
         }
         
-        //TODO: remove prints statements
-        cout << "argument: " << filename << endl;
-        cout << "argument: " << length << endl;
+        // create data to send
+        send_data.cmd_t = E_CMD_READ;
+        Utils::reset_copy_arr(send_data.filename, argv[2],
+            MAX_FILE_NAME_LEN);
+        send_data.input.number = length;
 
     } else if (cmd == CMD_WRITE) {
         if (argc < 4) {
             Utils::print_error(ERR_INSUFF_ARGS);
             suggest_help(argv[0]);
             exit(EXIT_FAILURE);
-        }            
-        string filename(argv[2]);
-        string data(argv[3]);
-        
-        //TODO: remove prints statements
-        cout << "argument: " << filename << endl;
-        cout << "argument: " << data << endl;
+        }
+
+        // create data to send
+        send_data.cmd_t = E_CMD_WRITE;
+        Utils::reset_copy_arr(send_data.filename, argv[2],
+            MAX_FILE_NAME_LEN);
+        Utils::reset_copy_arr(send_data.input.data, argv[3],
+            MAX_FILE_NAME_LEN);
 
     } else if (cmd == CMD_DELETE) {
         if (argc < 3) {
@@ -112,14 +101,27 @@ int main(int argc, char* argv[])
             suggest_help(argv[0]);
             exit(EXIT_FAILURE);
         }            
-        string filename(argv[2]);
 
-        //TODO: remove print statements
-        cout << "argument: " << filename << endl; 
+        // create data to send
+        send_data.cmd_t = E_CMD_DELETE;
+        Utils::reset_copy_arr(send_data.filename, argv[2],
+            MAX_FILE_NAME_LEN);
 
     } else {
         Utils::print_error("Unknown option");
         suggest_help(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    TcpSocket tcp_client("localhost", 8888);
+    try {
+        tcp_client.init();
+        tcp_client.send(&send_data);
+        cout << tcp_client.receive() << endl;
+        tcp_client.close();
+    } catch (Exception ex) {    
+        Utils::print_error(ex.get_message());
+        exit(EXIT_FAILURE);
     }
 
     return 0;

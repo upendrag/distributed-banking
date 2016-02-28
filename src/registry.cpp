@@ -35,8 +35,13 @@ std::string Registry::seek_file(std::string filename, int index)
         it->second = index;    
 
     std::stringstream ss;
-    ss << index;    
-    return filename + INFO_FILE_SEEKED + ss.str();
+    ss << index;
+    std::ifstream ifs(filename.c_str());
+    ifs.seekg(0, ifs.end);
+    if (index == ifs.tellg())
+        return filename + INFO_FILE_SEEKED_END;
+    else
+        return filename + INFO_FILE_SEEKED + ss.str();
 }
 
 std::string Registry::read_file(std::string filename, int length)
@@ -59,14 +64,27 @@ std::string Registry::read_file(std::string filename, int length)
 
 std::string Registry::write_file(std::string filename, std::string data)
 {
-    std::ofstream ofs(filename.c_str());
-    
     //check for seek position
+    long new_pos = 0;
     std::map<std::string, int>::iterator it = seek_positions.find(filename);
     if (it != seek_positions.end())
-        ofs.seekp(it->second);
+        new_pos = it->second;
+    
+    std::ifstream ifs(filename.c_str());
+    ifs.seekg(0, ifs.end);
+    long cur_pos = ifs.tellg();
+    ifs.close();
 
-    ofs.write(data.c_str(), data.size() + 1);
+    std::ofstream ofs;
+    if (new_pos < cur_pos) {
+        ofs.open(filename.c_str());
+        ofs.seekp(new_pos);
+    } else {
+        ofs.open(filename.c_str(),
+            std::ofstream::out | std::ofstream::app);
+    }       
+    
+    ofs.write(data.c_str(), data.size());
     ofs.close();
 
     return filename + INFO_FILE_WRITTEN;
@@ -100,7 +118,7 @@ bool Registry::test_seek_file(std::string filename, int index,
     
     std::ifstream ifs(filename.c_str());
     ifs.seekg(0, ifs.end);
-    if (index > ifs.tellg()) {
+    if (index <0 || (index !=0 && index > ifs.tellg())) {
         res = filename + FAIL_SEEK_OOR;
         return false;
     }

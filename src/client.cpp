@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
         Utils::reset_copy_arr(send_data.filename, argv[2],
             MAX_FILE_NAME_LEN);
         Utils::reset_copy_arr(send_data.input.data, argv[3],
-            MAX_FILE_NAME_LEN);
+            MAX_WRITE_LEN);
 
     } else if (cmd == CMD_DELETE) {
         if (argc < 3) {

@@ -19,6 +19,7 @@ const std::string ERR_INSUFF_ARGS = "insufficient arguments for this option";
 const std::string INFO_FILE_CREATED = " -- success: file created";
 const std::string INFO_FILE_DELETED = " -- success: file deleted";
 const std::string INFO_FILE_SEEKED = " -- success: cursor position moved to ";
+const std::string INFO_FILE_SEEKED_END = " -- success: cursor position moved to end";
 const std::string INFO_FILE_WRITTEN = " -- success: wrote text";
 
 // error messages

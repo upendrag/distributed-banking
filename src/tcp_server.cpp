@@ -14,14 +14,14 @@ void TcpServer::start(void) throw (Exception)
     main_socket.listen();
 
     // accept
-    TcpSocket client_socket;
     int client_len;
     while (true) {
+        TcpSocket client_socket;
         main_socket.accept(client_socket, client_len);
     
         client_socket.receive(client_data_cb->sock_data, sizeof(SockData));
         // callback to indicate client data is available
-        client_data_cb->on_data_read();
+        client_data_cb->on_data_read(&client_socket);
 
         client_socket.send((void *)"Success", 10);
         client_socket.close();

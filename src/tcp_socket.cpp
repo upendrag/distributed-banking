@@ -92,6 +92,18 @@ void TcpSocket::accept(TcpSocket& client_socket, int& client_socket_len)
     client_socket_len = (int) client_len;
 }
 
+// send/write string data to socket
+void TcpSocket::send(std::string data) throw (Exception)
+{
+    // extra space for '\0'
+    const int len = data.size() + 1;
+    char data_a[len];
+    memcpy(data_a, data.c_str(), data.size());
+    // null termination
+    data_a[len-1] = 0;
+    send(data_a, len);
+}
+
 // send/write data to socket
 void TcpSocket::send(void* data, int size) throw (Exception)
 {

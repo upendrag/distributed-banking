@@ -39,6 +39,7 @@ class TcpSocket
         void accept(TcpSocket& client_socket, 
             int& client_socket_len) throw (Exception);
         void send(void* data, int size) throw (Exception);
+        void send(std::string) throw (Exception);
         void receive(void* data, int size) throw (Exception);
         void close(void) throw (Exception);
 

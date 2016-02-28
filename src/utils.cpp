@@ -56,3 +56,4 @@ void Utils::reset_copy_arr(void* dest, void* src, int len)
     memset(dest, 0, len);
     memcpy(dest, src, len);
 }
+

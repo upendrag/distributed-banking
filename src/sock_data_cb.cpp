@@ -7,9 +7,9 @@ void SockDataCb::subscribe(on_sock_data cb, SockData* data)
     sock_data = data;
 }
 
-void SockDataCb::on_data_read(void) throw (Exception)
+void SockDataCb::on_data_read(TcpSocket* sock) throw (Exception)
 {
     if (!cb_func)
         throw Exception("callback function not defined");
-    cb_func(sock_data);
+    cb_func(sock_data, sock);
 }

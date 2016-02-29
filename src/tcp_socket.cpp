@@ -83,7 +83,7 @@ void TcpSocket::listen(void) throw (Exception)
 void TcpSocket::accept(TcpSocket& client_socket, int& client_socket_len)
     throw (Exception)
 {
-    socklen_t client_len;
+    socklen_t client_len = sizeof(client_socket.host_addr);
     client_socket.sock_fd = ::accept(sock_fd, 
         (struct sockaddr *)&client_socket.host_addr,
         &client_len);

@@ -42,7 +42,8 @@ enum CMD_TYPE {
     E_CMD_SEEK,
     E_CMD_READ,
     E_CMD_WRITE,
-    E_CMD_DELETE
+    E_CMD_DELETE,
+    E_CMD_TERMINATE
 };
 
 enum MSG_TYPE {

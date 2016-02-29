@@ -16,7 +16,7 @@ const std::string CMD_HELP = "help";
 const std::string CONFIG_FILE= "server.config";
 
 // reusable phrases
-const std::string ERR_INSUFF_ARGS = "insufficient arguments for this option";
+const std::string ERR_INSUFF_ARGS = "insufficient arguments for this command";
 
 // info messages
 const std::string INFO_FILE_CREATED = " -- success: file created";
@@ -37,13 +37,12 @@ const std::string FAIL_PEER_COMM = "failure: unknown exception while communincat
 
 // enums
 enum CMD_TYPE {
-    E_CMD_NODE,
+    E_CMD_NONE,
     E_CMD_CREATE,
     E_CMD_SEEK,
     E_CMD_READ,
     E_CMD_WRITE,
-    E_CMD_DELETE,
-    E_CMD_TERMINATE
+    E_CMD_DELETE
 };
 
 enum MSG_TYPE {

@@ -18,7 +18,7 @@ tcp_server.o:
 registry.o:
 	g++ -Wall -c src/registry.cpp -o obj/registry.o
 
-commons: exception.o utils.o config.o tcp_socket.o sock_data_cb.o
+commons: setup exception.o utils.o config.o tcp_socket.o sock_data_cb.o
 
 sock_data_cb.o:
 	g++ -Wall -c src/sock_data_cb.cpp -o obj/sock_data_cb.o
@@ -35,6 +35,10 @@ exception.o:
 utils.o:
 	g++ -Wall -c src/utils.cpp -o obj/utils.o
 
+setup:
+	mkdir -p bin
+	mkdir -p obj
+
 .PHONY: clean
 clean:
-	rm -rf bin/* obj/*
+	rm -rf bin/ obj/

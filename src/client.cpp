@@ -3,6 +3,8 @@
 #include "tcp_socket.h"
 #include "utils.h"
 
+#include <ctime>
+#include <cstdlib>
 #include <iostream>
 
 using namespace std;
@@ -20,14 +22,6 @@ int main(int argc, char* argv[])
         Utils::print_error("unable to read config");
         exit(EXIT_FAILURE);
     }
-    /*
-    if (argc < 2) {
-        Utils::print_error("Too few argumemts");
-        suggest_help(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    string cmd(argv[1]);
-    */
 
     // init socket data
     SockData send_data;
@@ -38,6 +32,10 @@ int main(int argc, char* argv[])
     int arg2 = 2;
 
     string cmd_str;
+
+    // seed for random number
+    srand(time(NULL));
+
     while (true) {
         // read command in prompt
         cout << ">> ";
@@ -159,8 +157,11 @@ int main(int argc, char* argv[])
             continue;
         }
 
+        // select server by random
+        int server_num = (rand() % 3) + 1;
+
         // send request to server
-        TcpConfig cfg = config.getTcpConfig(1);
+        TcpConfig cfg = config.getTcpConfig(server_num);
         TcpSocket tcp_client(cfg.port, cfg.host);
         try {
             ReplyMessage recv_data;
@@ -168,7 +169,7 @@ int main(int argc, char* argv[])
             tcp_client.send(&send_data, sizeof(SockData));
             tcp_client.receive(&recv_data, sizeof(ReplyMessage));
             cout << "Server " << recv_data.server_num
-                << ":: " << recv_data.message << endl;
+                << " :: " << recv_data.message << endl;
             tcp_client.close();
         } catch (Exception ex) {    
             Utils::print_error(ex.get_message());

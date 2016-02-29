@@ -92,8 +92,13 @@ std::string Registry::write_file(std::string filename, std::string data)
 
 std::string Registry::remove_file(std::string filename)
 {
-    if (std::remove(filename.c_str()) == 0)
+    if (std::remove(filename.c_str()) == 0){
+        std::map<std::string, int>::iterator it = seek_positions.find(filename);
+        if (it != seek_positions.end())
+            seek_positions.erase(it);
+        
         return filename + INFO_FILE_DELETED;
+    }
     
     return filename + FAIL_FILE_NOT_DELETED;
 }
@@ -102,7 +107,7 @@ bool Registry::test_add_file(std::string filename, std::string& res)
 {
     if (access(filename.c_str(), F_OK) == 0) {
         res = filename + FAIL_FILE_EXISTS;
-        return true;
+        return false;
     }
 
     return true;

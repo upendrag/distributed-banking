@@ -20,10 +20,18 @@ union CommandInput {
 
 // data struct carried by the socket buffer
 struct SockData {
+    MSG_TYPE msg_t;
     CMD_TYPE cmd_t;
     char filename[MAX_FILE_NAME_LEN];
     CommandInput input;
 };
+
+struct ReplyMessage {
+    int server_num;
+    bool result;
+    char message[MAX_WRITE_LEN];
+};
+
 
 class TcpSocket
 {

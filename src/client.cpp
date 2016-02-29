@@ -7,8 +7,8 @@
 
 using namespace std;
 
-void print_help(string);
-void suggest_help(string);
+void print_help(void);
+void suggest_help(void);
 
 int main(int argc, char* argv[])
 {
@@ -20,132 +20,167 @@ int main(int argc, char* argv[])
         Utils::print_error("unable to read config");
         exit(EXIT_FAILURE);
     }
-
+    /*
     if (argc < 2) {
         Utils::print_error("Too few argumemts");
         suggest_help(argv[0]);
         exit(EXIT_FAILURE);
     }
     string cmd(argv[1]);
+    */
 
     // init socket data
     SockData send_data;
     send_data.msg_t = CLIENT_TO_SERVER;
 
-    // Determine command type
-    if (cmd == CMD_HELP) {
-        print_help(argv[0]);
-        exit(EXIT_SUCCESS);
-    } else if (cmd == CMD_TERMINATE) {
-        send_data.cmd_t = E_CMD_TERMINATE;
-    } else if (cmd == CMD_CREATE) {
-        if (argc < 3) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }            
+    // arguments indexes
+    int arg1 = 1;
+    int arg2 = 2;
 
-        // create data to send
-        send_data.cmd_t = E_CMD_CREATE;
-        Utils::reset_copy_arr(send_data.filename, argv[2],
-            MAX_FILE_NAME_LEN);
+    string cmd_str;
+    while (true) {
+        // read command in prompt
+        cout << ">> ";
+        getline(cin, cmd_str);
+        vector<string> cmd_args = Utils::split_str(cmd_str, " ");
 
-    } else if (cmd == CMD_SEEK) {
-        if (argc < 4) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }            
-        int index;
+        int arg_c = cmd_args.size();
+        if (arg_c == 0)
+            continue;
+        string cmd = cmd_args.front();
+   
+        // Determine command type
+        if (cmd == CMD_HELP) {
+            print_help();
+            continue;
+
+        } else if (cmd == CMD_TERMINATE) {
+            cout << "Session ended" << endl;
+            exit(EXIT_SUCCESS);
+
+        } else if (cmd == CMD_CREATE) {
+            if (arg_c < 2) {
+                Utils::print_error(ERR_INSUFF_ARGS);
+                suggest_help();
+                continue;
+            }
+
+            // create data to send
+            send_data.cmd_t = E_CMD_CREATE;
+            Utils::copy_str_to_arr(cmd_args.at(arg1),
+                send_data.filename,
+                MAX_FILE_NAME_LEN);
+
+        } else if (cmd == CMD_SEEK) {
+            if (arg_c < 3) {
+                Utils::print_error(ERR_INSUFF_ARGS);
+                suggest_help();
+                continue;
+            }            
+            int index;
+            try {
+                index = Utils::str_to_int(cmd_args.at(arg2));
+            } catch (Exception ex) {
+                Utils::print_error("Parsing seek index: " 
+                    + ex.get_message());
+                continue;
+            }
+
+            // create data to send
+            send_data.cmd_t = E_CMD_SEEK;
+            Utils::copy_str_to_arr(cmd_args.at(arg1),
+                send_data.filename,
+                MAX_FILE_NAME_LEN);
+            send_data.input.number = index;
+
+        } else if (cmd == CMD_READ) {
+            if (arg_c < 3) {
+                Utils::print_error(ERR_INSUFF_ARGS);
+                suggest_help();
+                continue;
+            }            
+            int length;
+            try {
+                length = Utils::str_to_int(cmd_args.at(arg2));
+            } catch (Exception ex) {
+                Utils::print_error("Parsing read length: " 
+                    + ex.get_message());
+                continue;
+            }
+            
+            // create data to send
+            send_data.cmd_t = E_CMD_READ;
+            Utils::copy_str_to_arr(cmd_args.at(arg1),
+                send_data.filename,
+                MAX_FILE_NAME_LEN);
+            send_data.input.number = length;
+
+        } else if (cmd == CMD_WRITE) {
+            if (arg_c < 3) {
+                Utils::print_error(ERR_INSUFF_ARGS);
+                suggest_help();
+                continue;
+            }
+            string fname = cmd_args.at(arg1);
+
+            // create data to send
+            send_data.cmd_t = E_CMD_WRITE;
+            Utils::copy_str_to_arr(fname,
+                send_data.filename,
+                MAX_FILE_NAME_LEN);
+            
+            // read content after file arguments
+            // as text data to be written
+            int data_pos = cmd_str.find(fname);
+            data_pos = data_pos + fname.size() + 1; 
+            string data = cmd_str.substr(data_pos,
+                cmd_str.size() - data_pos);
+
+            Utils::copy_str_to_arr(data,
+                send_data.input.data,
+                MAX_FILE_NAME_LEN);
+
+        } else if (cmd == CMD_DELETE) {
+            if (arg_c < 2) {
+                Utils::print_error(ERR_INSUFF_ARGS);
+                suggest_help();
+                continue;
+            }            
+
+            // create data to send
+            send_data.cmd_t = E_CMD_DELETE;
+            Utils::copy_str_to_arr(cmd_args.at(arg1),
+                send_data.filename,
+                MAX_FILE_NAME_LEN);
+
+        } else {
+            Utils::print_error("Unknown option");
+            suggest_help();
+            continue;
+        }
+
+        // send request to server
+        TcpConfig cfg = config.getTcpConfig(1);
+        TcpSocket tcp_client(cfg.port, cfg.host);
         try {
-            index = Utils::str_to_int(argv[3]);
-        } catch (Exception ex) {
-            Utils::print_error("Parsing seek index: " 
-                + ex.get_message());
-            exit(EXIT_FAILURE);
+            ReplyMessage recv_data;
+            tcp_client.connect();
+            tcp_client.send(&send_data, sizeof(SockData));
+            tcp_client.receive(&recv_data, sizeof(ReplyMessage));
+            cout << "Server " << recv_data.server_num
+                << ":: " << recv_data.message << endl;
+            tcp_client.close();
+        } catch (Exception ex) {    
+            Utils::print_error(ex.get_message());
         }
-
-        // create data to send
-        send_data.cmd_t = E_CMD_SEEK;
-        Utils::reset_copy_arr(send_data.filename, argv[2],
-            MAX_FILE_NAME_LEN);
-        send_data.input.number = index;
-
-    } else if (cmd == CMD_READ) {
-        if (argc < 4) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }            
-        int length;
-        try {
-            length = Utils::str_to_int(argv[3]);
-        } catch (Exception ex) {
-            Utils::print_error("Parsing read length: " 
-                + ex.get_message());
-            exit(EXIT_FAILURE);
-        }
-        
-        // create data to send
-        send_data.cmd_t = E_CMD_READ;
-        Utils::reset_copy_arr(send_data.filename, argv[2],
-            MAX_FILE_NAME_LEN);
-        send_data.input.number = length;
-
-    } else if (cmd == CMD_WRITE) {
-        if (argc < 4) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }
-
-        // create data to send
-        send_data.cmd_t = E_CMD_WRITE;
-        Utils::reset_copy_arr(send_data.filename, argv[2],
-            MAX_FILE_NAME_LEN);
-        Utils::reset_copy_arr(send_data.input.data, argv[3],
-            MAX_WRITE_LEN);
-
-    } else if (cmd == CMD_DELETE) {
-        if (argc < 3) {
-            Utils::print_error(ERR_INSUFF_ARGS);
-            suggest_help(argv[0]);
-            exit(EXIT_FAILURE);
-        }            
-
-        // create data to send
-        send_data.cmd_t = E_CMD_DELETE;
-        Utils::reset_copy_arr(send_data.filename, argv[2],
-            MAX_FILE_NAME_LEN);
-
-    } else {
-        Utils::print_error("Unknown option");
-        suggest_help(argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    TcpConfig cfg = config.getTcpConfig(1);
-    TcpSocket tcp_client(cfg.port, cfg.host);
-    try {
-        ReplyMessage recv_data;
-        tcp_client.connect();
-        tcp_client.send(&send_data, sizeof(SockData));
-        tcp_client.receive(&recv_data, sizeof(ReplyMessage));
-        cout << "Server " << recv_data.server_num
-            << ":: " << recv_data.message << endl;
-        tcp_client.close();
-    } catch (Exception ex) {    
-        Utils::print_error(ex.get_message());
-        exit(EXIT_FAILURE);
     }
 
     return 0;
 }
 
-void print_help(string app_name)
+void print_help(void)
 {
-    cout << "usage: " << app_name << " <option> ..." << endl;
-    cout << "options:" << endl;
+    cout << "commands:" << endl;
     cout << "\t" <<  CMD_CREATE << " <filename>" << endl;
     cout << "\t" << CMD_SEEK << " <filename> <index>" << endl;
     cout << "\t" << CMD_READ << " <filename> <length>" << endl;
@@ -155,7 +190,7 @@ void print_help(string app_name)
     cout << "\t" << CMD_HELP << endl;
 }
 
-void suggest_help(string app_name)
+void suggest_help(void)
 {
-    cout << "Run '" << app_name << " help' for usage and options" << endl;
+    cout << "Use 'help' for usage and commands" << endl;
 }

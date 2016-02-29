@@ -12,6 +12,9 @@ const std::string CMD_DELETE = "delete";
 const std::string CMD_TERMINATE = "terminate";
 const std::string CMD_HELP = "help";
 
+// file names
+const std::string CONFIG_FILE= "server.config";
+
 // reusable phrases
 const std::string ERR_INSUFF_ARGS = "insufficient arguments for this option";
 
@@ -30,8 +33,9 @@ const std::string FAIL_FILE_NOT_FOUND = " -- failure: file does not exist";
 const std::string FAIL_SEEK_OOR = " -- failure: seek out of range";
 const std::string FAIL_FILE_NOT_READABLE = " -- failure: file not readable";
 const std::string FAIL_FILE_NOT_WRITABLE = " -- failure: file not writable";
+const std::string FAIL_PEER_COMM = "failure: unknown exception while communincating to peers";
 
-//enums
+// enums
 enum CMD_TYPE {
     E_CMD_NODE,
     E_CMD_CREATE,
@@ -42,7 +46,13 @@ enum CMD_TYPE {
     E_CMD_TERMINATE
 };
 
-//macros
-#define CONCAT(x,y) x ## y
+enum MSG_TYPE {
+    CLIENT_TO_SERVER,
+    SERVER_TO_SERVER_TEST_COMMIT,
+    SERVER_TO_SERVER_COMMIT
+};
+
+// macros
+#define NUM_OF_SERVERS 3
 
 #endif

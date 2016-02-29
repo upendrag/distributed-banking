@@ -41,10 +41,10 @@ void Utils::copy_str_to_arr(std::string str, char* arr,
     if (!arr)
         throw Exception("Utils::copy_str_to_arr: undefined array");
 
+    memset(arr, 0, len);
+
     if (str.size() < (unsigned int)len)
         len = str.size();
-
-    memset(arr, 0, len);
     memcpy(arr, str.c_str(), len);    
 }
 

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "constants.h"
 #include "tcp_socket.h"
 #include "utils.h"
@@ -11,6 +12,15 @@ void suggest_help(string);
 
 int main(int argc, char* argv[])
 {
+    // read config
+    Config config(CONFIG_FILE);
+    try {
+        config.create();
+    } catch (...) {
+        Utils::print_error("unable to read config");
+        exit(EXIT_FAILURE);
+    }
+
     if (argc < 2) {
         Utils::print_error("Too few argumemts");
         suggest_help(argv[0]);
@@ -20,6 +30,7 @@ int main(int argc, char* argv[])
 
     // init socket data
     SockData send_data;
+    send_data.msg_t = CLIENT_TO_SERVER;
 
     // Determine command type
     if (cmd == CMD_HELP) {
@@ -113,13 +124,15 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    TcpSocket tcp_client(76542);
+    TcpConfig cfg = config.getTcpConfig(1);
+    TcpSocket tcp_client(cfg.port, cfg.host);
     try {
-        char recv_data[256];
+        ReplyMessage recv_data;
         tcp_client.connect();
         tcp_client.send(&send_data, sizeof(SockData));
-        tcp_client.receive(&recv_data, 256);
-        cout << recv_data << endl;
+        tcp_client.receive(&recv_data, sizeof(ReplyMessage));
+        cout << "Server " << recv_data.server_num
+            << ":: " << recv_data.message << endl;
         tcp_client.close();
     } catch (Exception ex) {    
         Utils::print_error(ex.get_message());

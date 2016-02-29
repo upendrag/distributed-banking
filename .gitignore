@@ -30,3 +30,6 @@
 # Executable files
 client
 server
+
+# bin folders
+appspace/

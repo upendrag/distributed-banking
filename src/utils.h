@@ -25,4 +25,5 @@ class Utils
 
         static void reset_copy_arr(void* dest, void* src, int len);
 };
+
 #endif

@@ -120,6 +120,8 @@ void commit(SockData* c_data, ReplyMessage& r_msg)
             break;
         case E_CMD_DELETE:
             result = reg.remove_file(c_data->filename);
+        case E_CMD_TERMINATE:
+            reg.clear_seek_positions();
         default:
             break;
     }
@@ -151,6 +153,11 @@ bool test_commit(SockData* c_data, ReplyMessage& r_msg)
             break;
         case E_CMD_DELETE:
             success = reg.test_remove_file(c_data->filename, result);
+            break;
+        case E_CMD_TERMINATE:
+            // terminate should be always successful
+            success = true;
+            break;
         default:
             break;
     }
@@ -174,7 +181,8 @@ void commit_peers(SockData* c_data, ReplyMessage& r_msg,
     MSG_TYPE msg_t)
 {
     // no need to contact peers for read operation
-    if (c_data->cmd_t == E_CMD_READ)
+    if (c_data->cmd_t == E_CMD_READ ||
+        c_data->cmd_t == E_CMD_TERMINATE)
         return;
 
     c_data->msg_t = msg_t;

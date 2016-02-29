@@ -27,6 +27,11 @@ class Registry
         bool test_write_file(std::string filename, std::string& res);
         bool test_remove_file(std::string filename, std::string& res);
 
+        inline void clear_seek_positions(void)
+        {
+            seek_positions.clear();
+        }
+
     private:
         Registry()
         { }
